@@ -36,11 +36,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cantil/os/mem.h"
 #include "cantil/os/mutex.h"
 #include "cantil/os/sem.h"
+#include "cantil/vertex.h"
 
 struct CnWaitq {
+	struct CnVertex* v;
 	CnMutex* mut;
 	CnSem* sem;
-	struct CnBinode* q;
 };
 
 CnWaitq* cn_waitq_create(void)
@@ -49,7 +50,7 @@ CnWaitq* cn_waitq_create(void)
 
 	self->mut = mutex_create(MUTEX_POLICY_PRIO_INHERIT);
 	self->sem = sem_create(0);
-	self->q = NULL;
+	self->v = NULL;
 	return self;
 }
 
@@ -58,7 +59,7 @@ void cn_waitq_destroy(CnWaitq* waitq)
 	if (!waitq)
 		return;
 
-	if (waitq->q)
+	if (waitq->v)
 		TRACE(WARNING, "cantil", "Data loss suspected.");
 	sem_destroy(waitq->sem);
 	waitq->sem = NULL;
@@ -67,35 +68,35 @@ void cn_waitq_destroy(CnWaitq* waitq)
 	cn_free(waitq);
 }
 
-void cn_waitq_ins(CnWaitq* waitq, struct CnBinode* entry)
+void cn_waitq_ins(CnWaitq* waitq, struct CnVertex* entry)
 {
 	ENSURE(waitq, ERROR, null_param);
 	mutex_lock(waitq->mut);
-	waitq->q = binode_ins(waitq->q, entry, -1);
+	waitq->v = vxcirq_ins(waitq->v, entry, -1);
 	sem_post(waitq->sem);
 	mutex_unlock(waitq->mut);
 }
 
-struct CnBinode* cn_waitq_rem(CnWaitq* waitq)
+struct CnVertex* cn_waitq_rem(CnWaitq* waitq)
 {
-	struct CnBinode* entry = NULL;
+	struct CnVertex* entry = NULL;
 
 	ENSURE(waitq, ERROR, null_param);
 	sem_wait(waitq->sem);
 	mutex_lock(waitq->mut);
-	entry = binode_rem(&waitq->q, 0);
+	entry = vxcirq_rem(&waitq->v, 0);
 	mutex_unlock(waitq->mut);
 	return entry;
 }
 
-struct CnBinode* cn_waitq_tryrem(CnWaitq* waitq)
+struct CnVertex* cn_waitq_tryrem(CnWaitq* waitq)
 {
-	struct CnBinode* entry = NULL;
+	struct CnVertex* entry = NULL;
 
 	ENSURE(waitq, ERROR, null_param);
 	if (sem_trywait(waitq->sem)) {
 		mutex_lock(waitq->mut);
-		entry = binode_rem(&waitq->q, 0);
+		entry = vxcirq_rem(&waitq->v, 0);
 		mutex_unlock(waitq->mut);
 	}
 	return entry;

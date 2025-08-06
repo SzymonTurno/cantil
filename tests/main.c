@@ -249,62 +249,69 @@ TEST(sem, should_not_block_if_posted)
 
 TEST(waitq, should_not_block_after_insertion)
 {
-	struct CnBinode node = {0};
+	struct CnVertex* adjl[] = {NULL, NULL};
 	CnWaitq* waitq = waitq_create();
 
-	waitq_ins(waitq, &node);
-	TEST_ASSERT_EQUAL_PTR(&node, waitq_rem(waitq));
+	waitq_ins(waitq, (struct CnVertex*)adjl);
+	TEST_ASSERT_EQUAL_PTR(adjl, waitq_rem(waitq));
 	waitq_destroy(waitq);
 }
 
 TEST(binode, should_insert_at_any_position)
 {
-	struct CnBinode n[5] = {0};
+	struct Binode {
+		struct CnVertex* cantil_adj_list[2];
+	};
+
+	const size_t next = 0;
+	const size_t prev = 1;
+	struct Binode n[5] = {0};
 
 	/* -n0- */
-	TEST_ASSERT_EQUAL_PTR(&n[0], binode_ins(NULL, &n[0], 255));
-	TEST_ASSERT_EQUAL_PTR(n[0].prev, &n[0]);
-	TEST_ASSERT_EQUAL_PTR(n[0].next, &n[0]);
+	TEST_ASSERT_EQUAL_PTR(
+		&n[0], cirq_ins((struct Binode*)NULL, &n[0], 255));
+	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[prev], &n[0]);
+	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[next], &n[0]);
 
 	/* -n1--n0- */
-	TEST_ASSERT_EQUAL_PTR(&n[1], binode_ins(&n[0], &n[1], 0));
-	TEST_ASSERT_EQUAL_PTR(n[1].prev, &n[0]);
-	TEST_ASSERT_EQUAL_PTR(n[1].next, &n[0]);
-	TEST_ASSERT_EQUAL_PTR(n[0].prev, &n[1]);
-	TEST_ASSERT_EQUAL_PTR(n[0].next, &n[1]);
+	TEST_ASSERT_EQUAL_PTR(&n[1], cirq_ins(&n[0], &n[1], 0));
+	TEST_ASSERT_EQUAL_PTR(n[1].cantil_adj_list[prev], &n[0]);
+	TEST_ASSERT_EQUAL_PTR(n[1].cantil_adj_list[next], &n[0]);
+	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[prev], &n[1]);
+	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[next], &n[1]);
 
 	/* -n1--n0--n2- */
-	TEST_ASSERT_EQUAL_PTR(&n[1], binode_ins(&n[1], &n[2], -1));
-	TEST_ASSERT_EQUAL_PTR(n[1].prev, &n[2]);
-	TEST_ASSERT_EQUAL_PTR(n[1].next, &n[0]);
-	TEST_ASSERT_EQUAL_PTR(n[0].prev, &n[1]);
-	TEST_ASSERT_EQUAL_PTR(n[0].next, &n[2]);
-	TEST_ASSERT_EQUAL_PTR(n[2].prev, &n[0]);
-	TEST_ASSERT_EQUAL_PTR(n[2].next, &n[1]);
+	TEST_ASSERT_EQUAL_PTR(&n[1], cirq_ins(&n[1], &n[2], -1));
+	TEST_ASSERT_EQUAL_PTR(n[1].cantil_adj_list[prev], &n[2]);
+	TEST_ASSERT_EQUAL_PTR(n[1].cantil_adj_list[next], &n[0]);
+	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[prev], &n[1]);
+	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[next], &n[2]);
+	TEST_ASSERT_EQUAL_PTR(n[2].cantil_adj_list[prev], &n[0]);
+	TEST_ASSERT_EQUAL_PTR(n[2].cantil_adj_list[next], &n[1]);
 
 	/* -n1--n3--n0--n- */
-	TEST_ASSERT_EQUAL_PTR(&n[1], binode_ins(&n[1], &n[3], 1));
-	TEST_ASSERT_EQUAL_PTR(n[1].prev, &n[2]);
-	TEST_ASSERT_EQUAL_PTR(n[1].next, &n[3]);
-	TEST_ASSERT_EQUAL_PTR(n[3].prev, &n[1]);
-	TEST_ASSERT_EQUAL_PTR(n[3].next, &n[0]);
-	TEST_ASSERT_EQUAL_PTR(n[0].prev, &n[3]);
-	TEST_ASSERT_EQUAL_PTR(n[0].next, &n[2]);
-	TEST_ASSERT_EQUAL_PTR(n[2].prev, &n[0]);
-	TEST_ASSERT_EQUAL_PTR(n[2].next, &n[1]);
+	TEST_ASSERT_EQUAL_PTR(&n[1], cirq_ins(&n[1], &n[3], 1));
+	TEST_ASSERT_EQUAL_PTR(n[1].cantil_adj_list[prev], &n[2]);
+	TEST_ASSERT_EQUAL_PTR(n[1].cantil_adj_list[next], &n[3]);
+	TEST_ASSERT_EQUAL_PTR(n[3].cantil_adj_list[prev], &n[1]);
+	TEST_ASSERT_EQUAL_PTR(n[3].cantil_adj_list[next], &n[0]);
+	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[prev], &n[3]);
+	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[next], &n[2]);
+	TEST_ASSERT_EQUAL_PTR(n[2].cantil_adj_list[prev], &n[0]);
+	TEST_ASSERT_EQUAL_PTR(n[2].cantil_adj_list[next], &n[1]);
 
 	/* -n1--n3--n0--n--n2- */
-	TEST_ASSERT_EQUAL_PTR(&n[1], binode_ins(&n[1], &n[4], -2));
-	TEST_ASSERT_EQUAL_PTR(n[1].prev, &n[2]);
-	TEST_ASSERT_EQUAL_PTR(n[1].next, &n[3]);
-	TEST_ASSERT_EQUAL_PTR(n[3].prev, &n[1]);
-	TEST_ASSERT_EQUAL_PTR(n[3].next, &n[0]);
-	TEST_ASSERT_EQUAL_PTR(n[0].prev, &n[3]);
-	TEST_ASSERT_EQUAL_PTR(n[0].next, &n[4]);
-	TEST_ASSERT_EQUAL_PTR(n[4].prev, &n[0]);
-	TEST_ASSERT_EQUAL_PTR(n[4].next, &n[2]);
-	TEST_ASSERT_EQUAL_PTR(n[2].prev, &n[4]);
-	TEST_ASSERT_EQUAL_PTR(n[2].next, &n[1]);
+	TEST_ASSERT_EQUAL_PTR(&n[1], cirq_ins(&n[1], &n[4], -2));
+	TEST_ASSERT_EQUAL_PTR(n[1].cantil_adj_list[prev], &n[2]);
+	TEST_ASSERT_EQUAL_PTR(n[1].cantil_adj_list[next], &n[3]);
+	TEST_ASSERT_EQUAL_PTR(n[3].cantil_adj_list[prev], &n[1]);
+	TEST_ASSERT_EQUAL_PTR(n[3].cantil_adj_list[next], &n[0]);
+	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[prev], &n[3]);
+	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[next], &n[4]);
+	TEST_ASSERT_EQUAL_PTR(n[4].cantil_adj_list[prev], &n[0]);
+	TEST_ASSERT_EQUAL_PTR(n[4].cantil_adj_list[next], &n[2]);
+	TEST_ASSERT_EQUAL_PTR(n[2].cantil_adj_list[prev], &n[4]);
+	TEST_ASSERT_EQUAL_PTR(n[2].cantil_adj_list[next], &n[1]);
 }
 
 TEST(pool, should_return_freed_pointer)
@@ -420,10 +427,10 @@ TEST(broker, should_support_multi_thread_pubsub)
 
 TEST(logger, should_trace_waitq_dataloss)
 {
+	struct CnVertex* adjl[] = {NULL, NULL};
 	CnWaitq* q = waitq_create();
-	struct CnBinode node = {0};
 
-	waitq_ins(q, &node);
+	waitq_ins(q, (struct CnVertex*)adjl);
 	waitq_destroy(q);
 	TEST_ASSERT_EQUAL_STRING(
 		"[warning][cantil] Data loss suspected.\n", gettrace(0));
@@ -466,7 +473,7 @@ TEST(logger, should_trace_null_params)
 
 	subscribe(tmp, NULL);
 	TEST_ASSERT_EQUAL_STRING(
-		"src/broker/broker.c:305: Null param.\n",
+		"src/broker/broker.c:306: Null param.\n",
 		strstr(gettrace(0), "src/broker/broker.c:"));
 	free(tmp);
 }

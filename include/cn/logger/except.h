@@ -107,7 +107,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CN_ENSURE_MEMORY(ptr, lvl)                                             \
 	do {                                                                   \
 		if ((ptr) == NULL) {                                           \
-			RAISE(lvl, null_param);                                \
+			CN_RAISE(lvl, null_param);                             \
 			return NULL;                                           \
 		}                                                              \
 	} while (0)

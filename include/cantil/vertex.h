@@ -30,23 +30,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /**
- * @file cantil/cirq.h
+ * @file cantil/vertex.h
  *
- * @see cn/cirq.h
+ * @see cn/vertex.h
  */
 
-#ifndef CANTIL_CIRQ_H
-#define CANTIL_CIRQ_H
+#ifndef CANTIL_VERTEX_H
+#define CANTIL_VERTEX_H
 
-#include "cn/cirq.h"
+#include "cn/vertex.h"
 
-/** @see CN_CIRQ() */
-#define CIRQ CN_CIRQ
+/** @see cn_vx_get() */
+#define vx_get cn_vx_get
 
-/** @see cn_cirq_ins() */
-#define cirq_ins cn_cirq_ins
+/** @see cn_vxlist_ins() */
+#define vxlist_ins cn_vxlist_ins
 
-/** @see cn_cirq_rem() */
-#define cirq_rem cn_cirq_rem
+/** @see cn_vxlist_rem() */
+#define vxlist_rem cn_vxlist_rem
 
-#endif /* CANTIL_CIRQ_H */
+/** @see cn_vxcirq_ins() */
+#define vxcirq_ins cn_vxcirq_ins
+
+/** @see cn_vxcirq_rem() */
+#define vxcirq_rem cn_vxcirq_rem
+
+#endif /* CANTIL_VERTEX_H */

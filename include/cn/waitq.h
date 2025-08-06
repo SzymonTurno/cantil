@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef CN_WAITQ_H
 #define CN_WAITQ_H
 
-#include "cn/cirq.h"
+#include "cn/vertex.h"
 
 /**
  * @var typedef struct CnWaitq CnWaitq
@@ -66,17 +66,17 @@ CnWaitq* cn_waitq_create(void);
 void cn_waitq_destroy(CnWaitq* waitq);
 
 /**
- * @fn void cn_waitq_ins(CnWaitq* waitq, struct CnBinode* entry)
+ * @fn void cn_waitq_ins(CnWaitq* waitq, struct CnVertex* entry)
  *
  * @brief Insert an entry into a waiting queue
  *
  * @param[in,out] waitq The waiting queue.
  * @param[in,out] entry The inserted entry.
  */
-void cn_waitq_ins(CnWaitq* waitq, struct CnBinode* entry);
+void cn_waitq_ins(CnWaitq* waitq, struct CnVertex* entry);
 
 /**
- * @fn struct CnBinode* cn_waitq_rem(CnWaitq* waitq)
+ * @fn struct CnVertex* cn_waitq_rem(CnWaitq* waitq)
  *
  * @brief Remove an entry from the front of the queue.
  *
@@ -87,10 +87,10 @@ void cn_waitq_ins(CnWaitq* waitq, struct CnBinode* entry);
  *
  * @return The removed entry.
  */
-struct CnBinode* cn_waitq_rem(CnWaitq* waitq);
+struct CnVertex* cn_waitq_rem(CnWaitq* waitq);
 
 /**
- * @fn struct CnBinode* cn_waitq_tryrem(CnWaitq* waitq)
+ * @fn struct CnVertex* cn_waitq_tryrem(CnWaitq* waitq)
  *
  * @brief Try to remove an entry from the front of the queue.
  *
@@ -100,6 +100,6 @@ struct CnBinode* cn_waitq_rem(CnWaitq* waitq);
  *
  * @return The removed entry if the queue was not empty. Otherwise, NULL.
  */
-struct CnBinode* cn_waitq_tryrem(CnWaitq* waitq);
+struct CnVertex* cn_waitq_tryrem(CnWaitq* waitq);
 
 #endif /* CN_WAITQ_H */
