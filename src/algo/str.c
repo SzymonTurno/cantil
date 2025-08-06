@@ -81,9 +81,12 @@ char* cn_newstr(const char* str)
 
 char* cn_strlist_rem(struct CnStrlist** listp)
 {
-	struct CnStrlist* tmp = list_rem(listp);
-	char* ret = *list_data(tmp);
+	struct CnStrlist* tmp = NULL;
+	char* ret = NULL;
 
+	ENSURE_MEMORY(listp, ERROR);
+	tmp = list_rem(listp);
+	ret = *list_data(tmp);
 	cn_free(tmp);
 	return ret;
 }

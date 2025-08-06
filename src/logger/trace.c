@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cantil/logger/except.h"
 #include "cantil/logger/streambag.h"
 #include "cantil/os/mem.h"
+#include "cn/vertex.h"
 
 #define BUFF_MAX_SIZE 128
 
@@ -99,4 +100,18 @@ void cn_logger_cleanup(void)
 		streambag_destroy(streambags[i]);
 		streambags[i] = NULL;
 	}
+}
+
+int cn_vx_hasmem(const struct CnVertex* v, int line)
+{
+	char* buff = NULL;
+
+	if (v)
+		return 1;
+	buff = NEW(char, BUFF_MAX_SIZE);
+	cn_snprintf(
+		buff, BUFF_MAX_SIZE, "cn/vertex.h:%d: [error] v is null\n",
+		line);
+	cn_free(buff);
+	return 0;
 }

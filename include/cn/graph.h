@@ -29,35 +29,46 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "cantil/list.h"
-#include "cantil/logger/except.h"
-#include "cantil/logger/trace.h"
+/**
+ * @file cn/graph.h
+ *
+ * @brief Graph.
+ */
 
-struct CnUnnode** cn_unnode_hand(struct CnUnnode** nodep, int pos)
-{
-	ENSURE(nodep, ERROR, null_param);
-	for (; *nodep && pos--; nodep = &(*nodep)->next)
-		;
-	return nodep;
-}
+#ifndef CN_GRAPH_H
+#define CN_GRAPH_H
 
-struct CnUnnode*
-cn_unnode_ins(struct CnUnnode* head, struct CnUnnode* node, int pos)
-{
-	struct CnUnnode** i = list_hand(&head, pos);
+#include "cn/vertex.h"
+#include <stdint.h>
 
-	ENSURE(node, ERROR, null_param);
-	node->next = *i;
-	*i = node;
-	return head;
-}
+#ifdef __STRICT_ANSI__
+#define CN_TYPEOF(var) void*
+#else
+#define CN_TYPEOF(var) __typeof__(var)
+#endif
 
-struct CnUnnode* cn_unnode_rem(struct CnUnnode** headp, int pos)
-{
-	struct CnUnnode** i = list_hand(headp, pos);
-	struct CnUnnode* ret = *i;
+#define CN_GRAPH(name, deg, type)                                              \
+	name                                                                   \
+	{                                                                      \
+		struct CnVertex* cantil_adj_list[deg];                         \
+		type cantil_graph_data;                                        \
+	}
 
-	ENSURE(*i, ERROR, null_param);
-	*i = (*i)->next;
-	return ret;
-}
+#define cn_adjl_cast(graphp)                                                   \
+	(0 ? (*(graphp))->cantil_adj_list : (struct CnVertex**)(graphp))
+
+#define cn_graph_cast(graph)                                                   \
+	(0 ? (struct CnVertex*)(graph)->cantil_adj_list                        \
+	   : (struct CnVertex*)(graph))
+
+#define cn_graph_recast(vp, graph)                                             \
+	(0 ? (CN_TYPEOF(graph))(intptr_t)((graph)->cantil_adj_list &&          \
+	                                  (vp)->adjl)                          \
+	   : ((CN_TYPEOF(graph))(vp)))
+
+#define cn_graph_data(graph) (&(graph)->cantil_graph_data)
+
+#define cn_graph_foredge(type, i, graphp, edge)                                \
+	for (type** i = graphp; *i; i = (type**)&(*i)->cantil_adj_list[edge])
+
+#endif /* CN_GRAPH_H */

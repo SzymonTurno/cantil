@@ -48,7 +48,7 @@ list_print(struct StreamList* head, const char* format, va_list vlist)
 {
 	va_list vcopy;
 
-	list_iter (i, &head) {
+	list_foreach (struct StreamList, i, &head) {
 		va_copy(vcopy, vlist);
 		cn_vfprintf(*list_data(*i), format, vlist);
 		va_end(vcopy);
@@ -89,7 +89,7 @@ void cn_streambag_ins(CnStreamBag* bag, CnFstream* stream)
 void cn_streambag_rem(CnStreamBag* bag, CnFstream* stream)
 {
 	ENSURE(bag, ERROR, null_param);
-	list_iter (i, &bag->head)
+	list_foreach (struct StreamList, i, &bag->head)
 		if (*list_data(*i) == stream) {
 			mutex_lock(bag->mutex);
 			cn_free(list_rem(i));
