@@ -43,6 +43,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /** @see cn_vx_get() */
 #define vx_get cn_vx_get
 
+/** @see cn_vx2adjl() */
+#define vx2adjl cn_vx2adjl
+
+/** @see cn_adjl2vx() */
+#define adjl2vx cn_adjl2vx
+
 /** @see cn_vxlist_ins() */
 #define vxlist_ins cn_vxlist_ins
 

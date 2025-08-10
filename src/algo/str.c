@@ -39,6 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cantil/logger/trace.h"
 #include "cantil/os/mem.h"
 #include "cantil/rbtree.h"
+#include "cantil/vertex.h"
 #include <string.h>
 
 static struct CnStrbag* bag_create(const char* str)
@@ -156,9 +157,9 @@ void cn_strbag_destroy(struct CnStrbag* bag)
 		if (!p)
 			break;
 
-		if (i == p->left)
-			p->left = NULL;
+		if (i == rb_left(p))
+			vx2adjl(graph_cast(p))[RB_LEFT] = NULL;
 		else
-			p->right = NULL;
+			vx2adjl(graph_cast(p))[RB_RIGHT] = NULL;
 	}
 }

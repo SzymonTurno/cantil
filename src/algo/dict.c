@@ -31,51 +31,66 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "cn/dict.h"
 #include "cantil/arith.h"
+#include "cantil/graph.h"
 #include "cantil/logger/except.h"
 #include "cantil/logger/trace.h"
 #include "cantil/rbtree.h"
+#include "cantil/vertex.h"
 #include <string.h>
 
-static struct CnStrnode* cont(struct CnRbnode* ptr)
+static struct CnRbnode* adjl2rbnode(struct CnVertex** adjl)
+{
+	struct CnRbnode* ptr = NULL;
+
+	ENSURE(adjl, ERROR, sanity_fail);
+	ptr = graph_recast(adjl2vx(adjl), ptr);
+	return ptr;
+}
+
+static struct CnStrnode* rbnode2strnode(struct CnRbnode* ptr)
 {
 	return container_of(ptr, struct CnStrnode, node);
 }
 
-static struct CnStrnode* trycont(struct CnRbnode* ptr)
+static struct CnStrnode* adjl2strnode(struct CnVertex** adjl)
 {
-	return ptr ? cont(ptr) : NULL;
+	ENSURE(adjl, ERROR, sanity_fail);
+	return rbnode2strnode(adjl2rbnode(adjl));
 }
 
 struct CnStrnode* cn_strnode_ins(struct CnStrnode* root, struct CnStrnode* node)
 {
-	struct CnRbnode* tmp = root ? &root->node : NULL;
-	struct CnRbnode** i = &tmp;
-	struct CnStrnode* p = NULL;
+	struct CnVertex* adjl[] = {root ? graph_cast(&root->node) : NULL};
+	struct CnVertex** p = adjl;
+	size_t child = 0;
 
-	ENSURE(node && node->str, ERROR, null_param);
-	while (*i) {
-		p = cont(*i);
-		if (strcmp(node->str, p->str) < 0)
-			i = &p->node.left;
+	ENSURE_MEMORY(node, ERROR);
+	ENSURE_MEMORY(node->str, ERROR);
+	while (p[child]) {
+		p = vx2adjl(p[child]);
+		if (strcmp(node->str, adjl2strnode(p)->str) < 0)
+			child = RB_LEFT;
 		else
-			i = &p->node.right;
+			child = RB_RIGHT;
 	}
-	*i = rb_link(&node->node, p ? &p->node : NULL);
-	return cont(rb_insrebal(tmp, &node->node));
+	p[child] = graph_cast(
+		rb_link(&node->node, (p == adjl) ? NULL : adjl2rbnode(p)));
+	return rbnode2strnode(
+		rb_insrebal(graph_recast(adjl[0], &node->node), &node->node));
 }
 
 struct CnStrnode* cn_strnode_find(struct CnStrnode* root, const char* str)
 {
 	int tmp = 0;
 
-	ENSURE(str, ERROR, null_param);
+	ENSURE_MEMORY(str, ERROR);
 	while (root) {
 		ENSURE(root->str, ERROR, null_param);
 		tmp = strcmp(str, root->str);
 		if (tmp < 0)
-			root = trycont(root->node.left);
+			root = rbnode2strnode(rb_left(&root->node));
 		else if (tmp > 0)
-			root = trycont(root->node.right);
+			root = rbnode2strnode(rb_right(&root->node));
 		else
 			break;
 	}

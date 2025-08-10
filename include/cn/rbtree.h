@@ -38,6 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef CN_RBTREE_H
 #define CN_RBTREE_H
 
+#include "cn/graph.h"
+#include "cn/logger/except.h"
 #include <stdint.h>
 
 /**
@@ -51,47 +53,33 @@ enum CnBstOrder {
 	CN_BST_POSTORDER,   /**< post-order. */
 };
 
-/**
- * @struct CnRbnode
- *
- * @brief Red-black tree node.
- */
-struct CnRbnode {
-	/**
-	 * @var u
-	 *
-	 * @brief The parent pointer and the node color.
-	 */
-	union {
-		/**
-		 * @var intptr_t parcol
-		 *
-		 * @brief The parent pointer and the node color.
-		 */
-		intptr_t parcol;
-
-		/**
-		 * @var intptr_t align
-		 *
-		 * @brief Alignment.
-		 */
-		int32_t align;
-	} u;
-
-	/**
-	 * @var struct CnRbnode* left
-	 *
-	 * @brief The pointer to the left child.
-	 */
-	struct CnRbnode* left;
-
-	/**
-	 * @var struct CnRbnode* right
-	 *
-	 * @brief The pointer to the right child.
-	 */
-	struct CnRbnode* right;
+enum CnRbChild {
+	CN_RB_LEFT = 0,   /**< left child.   */
+	CN_RB_RIGHT,      /**< right child.  */
+	CN_RB_N_CHILDREN, /**< number of children. */
 };
+
+/* clang-format off */
+CN_GRAPH(struct CnRbnode, CN_RB_N_CHILDREN, union {intptr_t parcol; int32_t align;});
+/* clang-format on */
+
+static inline struct CnRbnode* cn_rb_left(struct CnRbnode* node)
+{
+	struct CnVertex** adjl = NULL;
+
+	CN_ENSURE_MEMORY(node, CN_ERROR);
+	adjl = cn_vx2adjl(cn_graph_cast(node));
+	return cn_graph_recast(adjl[CN_RB_LEFT], node);
+}
+
+static inline struct CnRbnode* cn_rb_right(struct CnRbnode* node)
+{
+	struct CnVertex** adjl = NULL;
+
+	CN_ENSURE_MEMORY(node, CN_ERROR);
+	adjl = cn_vx2adjl(cn_graph_cast(node));
+	return cn_graph_recast(adjl[CN_RB_RIGHT], node);
+}
 
 /**
  * @fn struct CnRbnode* cn_rb_link(struct CnRbnode* node, struct CnRbnode* parent)

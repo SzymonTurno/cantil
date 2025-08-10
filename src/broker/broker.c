@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cantil/os/mem.h"
 #include "cantil/rbtree.h"
 #include "cantil/str.h"
+#include "cantil/vertex.h"
 #include "message.h"
 
 #define MSG_SIZE sizeof(struct Message)
@@ -76,10 +77,10 @@ static void dict_destroy(CnChannel* dict)
 		if (!p)
 			break;
 
-		if (i == p->left)
-			p->left = NULL;
+		if (i == rb_left(p))
+			vx2adjl(graph_cast(p))[RB_LEFT] = NULL;
 		else
-			p->right = NULL;
+			vx2adjl(graph_cast(p))[RB_RIGHT] = NULL;
 	}
 }
 

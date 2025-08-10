@@ -109,4 +109,5 @@ void cn_vx_error(int line)
 		buff, BUFF_MAX_SIZE, "cn/vertex.h:%d: [error] null pointer\n",
 		line);
 	cn_free(buff);
+	cn_sysfail();
 }

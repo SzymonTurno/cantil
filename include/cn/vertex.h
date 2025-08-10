@@ -71,12 +71,22 @@ cn_vx_get(struct CnVertex* v, size_t edge, int pos)
 	return v;
 }
 
+static inline struct CnVertex** cn_vx2adjl(struct CnVertex* v)
+{
+	return (struct CnVertex**)v;
+}
+
+static inline struct CnVertex* cn_adjl2vx(struct CnVertex** adjl)
+{
+	return (struct CnVertex*)adjl;
+}
+
 static inline struct CnVertex*
 cn_vxlist_ins(struct CnVertex* list, struct CnVertex* entry, int pos)
 {
 	const size_t next = 0;
 	struct CnVertex* adjl[] = {list};
-	struct CnVertex* v = cn_vx_get((struct CnVertex*)adjl, next, pos);
+	struct CnVertex* v = cn_vx_get(cn_adjl2vx(adjl), next, pos);
 
 	CN_VX_MEMCHECK(entry);
 	entry->adjl[next] = v->adjl[next];
@@ -88,7 +98,7 @@ static inline struct CnVertex* cn_vxlist_rem(struct CnVertex** list, int pos)
 {
 	const size_t next = 0;
 	struct CnVertex* ret = NULL;
-	struct CnVertex* v = cn_vx_get((struct CnVertex*)list, next, pos);
+	struct CnVertex* v = cn_vx_get(cn_adjl2vx(list), next, pos);
 
 	ret = v->adjl[next];
 	v->adjl[next] = ret->adjl[next];

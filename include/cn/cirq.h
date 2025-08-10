@@ -76,13 +76,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cn/graph.h"
 
 /* @cond */
-#define _CN_CIRQ_INS(cirq, entry, pos, ...)                                    \
+#define CN__CIRQ_INS(cirq, entry, pos, ...)                                    \
 	(cn_graph_recast(                                                      \
 		cn_vxcirq_ins(                                                 \
 			cn_graph_cast(cirq), cn_graph_cast(entry), (pos)),     \
 		(entry)))
 
-#define _CN_CIRQ_REM(cirqp, pos, ...)                                          \
+#define CN__CIRQ_REM(cirqp, pos, ...)                                          \
 	(cn_graph_recast(cn_vxcirq_rem(cn_adjl_cast(cirqp), (pos)), *(cirqp)))
 /* @endcond */
 
@@ -113,7 +113,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @note Compile with the GNU extension to enable a type check for the @a cirq.
  */
-#define cn_cirq_ins(cirq, ...) _CN_CIRQ_INS((cirq), __VA_ARGS__, -1, )
+#define cn_cirq_ins(cirq, ...) CN__CIRQ_INS((cirq), __VA_ARGS__, -1, )
 
 /**
  * @def cn_cirq_rem(...)
@@ -129,6 +129,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @note Compile with the GNU extension to enable a type check for the @a cirqp.
  */
-#define cn_cirq_rem(...) _CN_CIRQ_REM(__VA_ARGS__, 0, )
+#define cn_cirq_rem(...) CN__CIRQ_REM(__VA_ARGS__, 0, )
 
 #endif /* CN_CIRQ_H */

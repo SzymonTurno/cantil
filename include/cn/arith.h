@@ -66,6 +66,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #define CN_MIN(x, y) (((x) < (y)) ? (x) : (y))
 
+#define CN_ARRAY_LENGTH(array) (sizeof(array) / sizeof(array[0]))
+
 #ifdef __STRICT_ANSI__
 
 /* clang-format off */

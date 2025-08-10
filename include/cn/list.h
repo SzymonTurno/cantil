@@ -68,13 +68,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cn/graph.h"
 
 /* @cond */
-#define _CN_LIST_INS(list, entry, pos, ...)                                    \
+#define CN__LIST_INS(list, entry, pos, ...)                                    \
 	(cn_graph_recast(                                                      \
 		cn_vxlist_ins(                                                 \
 			cn_graph_cast(list), cn_graph_cast(entry), (pos)),     \
 		(entry)))
 
-#define _CN_LIST_REM(listp, pos, ...)                                          \
+#define CN__LIST_REM(listp, pos, ...)                                          \
 	(cn_graph_recast(cn_vxlist_rem(cn_adjl_cast(listp), (pos)), *(listp)))
 /* @endcond */
 
@@ -111,7 +111,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * at the tail use -1 for the @a pos. The argument @a pos is optional and by
  * default it equals 0.
  */
-#define cn_list_ins(list, ...) _CN_LIST_INS((list), __VA_ARGS__, 0, )
+#define cn_list_ins(list, ...) CN__LIST_INS((list), __VA_ARGS__, 0, )
 
 /**
  * @def cn_list_rem(...)
@@ -125,6 +125,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @return The removed entry.
  */
-#define cn_list_rem(...) _CN_LIST_REM(__VA_ARGS__, 0, )
+#define cn_list_rem(...) CN__LIST_REM(__VA_ARGS__, 0, )
 
 #endif /* CN_LIST_H */

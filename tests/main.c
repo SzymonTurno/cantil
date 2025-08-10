@@ -1,12 +1,14 @@
 #include "cantil/broker.h"
 #include "cantil/cirq.h"
 #include "cantil/dict.h"
+#include "cantil/graph.h"
 #include "cantil/logger/trace.h"
 #include "cantil/os/mutex.h"
 #include "cantil/os/sem.h"
 #include "cantil/pool.h"
 #include "cantil/rbtree.h"
 #include "cantil/str.h"
+#include "cantil/vertex.h"
 #include "cantil/waitq.h"
 #include "cn/os/mem.h"
 #include "pubsub.h"
@@ -18,13 +20,21 @@
 
 #define LINE(str) str "\n"
 
-#define SIMPLE_TEST_GROUP(group)                                               \
+#define SIMPLE_TEST_GROUP(group, name)                                         \
 	TEST_SETUP(group)                                                      \
 	{                                                                      \
+		printf("\n");                                                  \
+		logger_attach(INFO, cn_stdout());                              \
+		trace(INFO, "ut", "Running test case for: %s.", name);         \
+		logger_detach(INFO, cn_stdout());                              \
 		return;                                                        \
 	}                                                                      \
 	TEST_TEAR_DOWN(group)                                                  \
 	{                                                                      \
+		logger_attach(INFO, cn_stdout());                              \
+		trace(INFO, "ut", "Done.");                                    \
+		logger_detach(INFO, cn_stdout());                              \
+		logger_cleanup();                                              \
 		return;                                                        \
 	}                                                                      \
 	TEST_GROUP(group)
@@ -37,13 +47,17 @@ TEST_SETUP(logger)
 {
 	test_stream = cn_fopen("logger_traces.tmp", "w+");
 
+	logger_attach(INFO, cn_stdout());
 	logger_attach(DEBUG, test_stream);
 	logger_attach(WARNING, test_stream);
 	logger_attach(ERROR, test_stream);
+	printf("\n");
+	trace(INFO, "ut", "Running test case for logger.");
 }
 
 TEST_TEAR_DOWN(logger)
 {
+	trace(INFO, "ut", "Done.");
 	logger_cleanup();
 	cn_fclose(test_stream);
 	cn_remove("logger_traces.tmp");
@@ -59,17 +73,19 @@ static const char* gettrace(int index)
 	return cn_fgets(buff, sizeof(buff), test_stream);
 }
 
-SIMPLE_TEST_GROUP(common);
-SIMPLE_TEST_GROUP(list);
-SIMPLE_TEST_GROUP(cirq);
-SIMPLE_TEST_GROUP(strbag);
-SIMPLE_TEST_GROUP(mutex);
-SIMPLE_TEST_GROUP(sem);
-SIMPLE_TEST_GROUP(waitq);
-SIMPLE_TEST_GROUP(binode);
-SIMPLE_TEST_GROUP(pool);
-SIMPLE_TEST_GROUP(subscriber);
-SIMPLE_TEST_GROUP(broker);
+SIMPLE_TEST_GROUP(common, "common");
+SIMPLE_TEST_GROUP(list, "list");
+SIMPLE_TEST_GROUP(cirq, "cirq");
+SIMPLE_TEST_GROUP(rbnode, "rbnode");
+SIMPLE_TEST_GROUP(strnode, "strnode");
+SIMPLE_TEST_GROUP(strbag, "strbag");
+SIMPLE_TEST_GROUP(mutex, "mutex");
+SIMPLE_TEST_GROUP(sem, "sem");
+SIMPLE_TEST_GROUP(waitq, "waitq");
+SIMPLE_TEST_GROUP(binode, "binode");
+SIMPLE_TEST_GROUP(pool, "pool");
+SIMPLE_TEST_GROUP(subscriber, "subscriber");
+SIMPLE_TEST_GROUP(broker, "broker");
 
 TEST(common, should_destroy_null)
 {
@@ -106,12 +122,113 @@ TEST(cirq, should_implement_fifo)
 	TEST_ASSERT_NULL(q);
 }
 
+TEST(rbnode, should_return_left_and_right)
+{
+	struct CnVertex left[1] = {0};
+	struct CnVertex right[1] = {0};
+	struct CnVertex* adjl[] = {left, right};
+
+	TEST_ASSERT_EQUAL_PTR(
+		left, (struct CnVertex*)rb_left((struct CnRbnode*)adjl));
+	TEST_ASSERT_EQUAL_PTR(
+		right, (struct CnVertex*)rb_right((struct CnRbnode*)adjl));
+}
+
+TEST(rbnode, should_link_as_leaf)
+{
+	struct CnRbnode p = {0};
+	struct CnRbnode n = {0};
+
+	memset(&n, 0xA, sizeof(n));
+	TEST_ASSERT_EQUAL_PTR(&n, rb_link(&n, &p));
+	/* Adding one ("+ 1") verifies that node is red. */
+	TEST_ASSERT_EQUAL_INT(((intptr_t)&p) + 1, graph_data(&n)->parcol);
+	TEST_ASSERT_NULL(rb_left(&n));
+	TEST_ASSERT_NULL(rb_right(&n));
+}
+
+TEST(rbnode, should_insert_and_balance)
+{
+	struct CnRbnode c = {0};
+	struct CnRbnode a = {0};
+	struct CnRbnode b = {0};
+	struct CnVertex** adjl = vx2adjl((struct CnVertex*)&c);
+
+	/*
+	 *    c
+	 *   / \
+	 *  a (nil)
+	 */
+	adjl[0] = graph_cast(rb_link(&a, &c));
+
+	/*
+	 *    c
+	 *   / \
+	 *  a (nil)
+	 */
+	TEST_ASSERT_EQUAL_PTR(&c, rb_insrebal(&c, &a));
+
+	/*
+	 *        c
+	 *       / \
+	 *      a (nil)
+	 *     / \
+	 *  (nil) b
+	 */
+	adjl = vx2adjl((struct CnVertex*)&a);
+	adjl[1] = graph_cast(rb_link(&b, &a));
+
+	/*
+	 *        b
+	 *       / \
+	 *      a   c
+	 */
+	TEST_ASSERT_EQUAL_PTR(&b, rb_insrebal(&c, &b));
+	adjl = vx2adjl((struct CnVertex*)&b);
+	TEST_ASSERT_EQUAL_PTR(&a, adjl[0]);
+	TEST_ASSERT_EQUAL_PTR(&c, adjl[1]);
+}
+
+TEST(strnode, should_sort)
+{
+	struct CnStrnode q = {.node = {0}, .str = "q"};
+	struct CnStrnode w = {.node = {0}, .str = "w"};
+	struct CnStrnode e = {.node = {0}, .str = "e"};
+	struct CnStrnode r = {.node = {0}, .str = "r"};
+	struct CnStrnode t = {.node = {0}, .str = "t"};
+	struct CnStrnode y = {.node = {0}, .str = "y"};
+	struct CnStrnode* root = strnode_ins(NULL, &q);
+
+	TEST_ASSERT_EQUAL_PTR(&q, root);
+	root = strnode_ins(root, &w);
+	root = strnode_ins(root, &e);
+	root = strnode_ins(root, &r);
+	root = strnode_ins(root, &t);
+	root = strnode_ins(root, &y);
+	root = (struct CnStrnode*)rb_first((struct CnRbnode*)root, BST_INORDER);
+	TEST_ASSERT_EQUAL_STRING("e", root->str);
+	root = (struct CnStrnode*)rb_next((struct CnRbnode*)root, BST_INORDER);
+	TEST_ASSERT_EQUAL_STRING("q", root->str);
+	root = (struct CnStrnode*)rb_next((struct CnRbnode*)root, BST_INORDER);
+	TEST_ASSERT_EQUAL_STRING("r", root->str);
+	root = (struct CnStrnode*)rb_next((struct CnRbnode*)root, BST_INORDER);
+	TEST_ASSERT_EQUAL_STRING("t", root->str);
+	root = (struct CnStrnode*)rb_next((struct CnRbnode*)root, BST_INORDER);
+	TEST_ASSERT_EQUAL_STRING("w", root->str);
+	root = (struct CnStrnode*)rb_next((struct CnRbnode*)root, BST_INORDER);
+	TEST_ASSERT_EQUAL_STRING("y", root->str);
+	TEST_ASSERT_NULL(rb_next((struct CnRbnode*)root, BST_INORDER));
+}
+
 TEST(strbag, should_allow_many_entries)
 {
 	struct CnStrbag* bag = NULL;
 	char str[sizeof(int) + 1] = {0};
 
 	srand(1);
+	*((int*)str) = rand();
+	bag = strbag_ins(bag, str);
+	TEST_ASSERT_EQUAL_STRING(str, dict_getk(bag));
 	for (int i = 0; i < 10; i++) {
 		for (int i = 0; i < 1000; i++) {
 			*((int*)str) = rand();
@@ -196,7 +313,7 @@ TEST(strbag, should_find_first)
 	 *   \
 	 *    b
 	 */
-	tmp = (struct CnStrbag*)((struct CnRbnode*)bag)->right;
+	tmp = (struct CnStrbag*)rb_right((struct CnRbnode*)bag);
 	TEST_ASSERT_EQUAL_STRING("d", dict_getk(tmp));
 	bag = (struct CnStrbag*)rb_first((struct CnRbnode*)tmp, BST_INORDER);
 	TEST_ASSERT_EQUAL_STRING("a", dict_getk(bag));
@@ -442,11 +559,11 @@ TEST(logger, should_trace_rbtree_not_supported)
 
 	rb_next(&node, BST_POSTORDER);
 	TEST_ASSERT_EQUAL_STRING(
-		"src/algo/rbtree.c:189: Not supported.\n",
+		"src/algo/rbtree.c:203: Not supported.\n",
 		strstr(gettrace(0), "src/algo/rbtree.c:"));
 	rb_first(&node, BST_PREORDER);
 	TEST_ASSERT_EQUAL_STRING(
-		"src/algo/rbtree.c:150: Not supported.\n",
+		"src/algo/rbtree.c:164: Not supported.\n",
 		strstr(gettrace(1), "src/algo/rbtree.c:"));
 }
 
@@ -464,7 +581,9 @@ TEST(logger, should_trace_error)
 
 TEST(logger, should_do_nothing_if_not_initialized)
 {
+	logger_detach(INFO, cn_stdout());
 	trace(INFO, NULL, "");
+	logger_attach(INFO, cn_stdout());
 }
 
 TEST(logger, should_trace_null_params)
@@ -473,7 +592,7 @@ TEST(logger, should_trace_null_params)
 
 	subscribe(tmp, NULL);
 	TEST_ASSERT_EQUAL_STRING(
-		"src/broker/broker.c:306: Null param.\n",
+		"src/broker/broker.c:307: Null param.\n",
 		strstr(gettrace(0), "src/broker/broker.c:"));
 	free(tmp);
 }
@@ -543,12 +662,13 @@ TEST(logger, should_trace_not_supported_mutex_type)
 
 static void run_all_tests(void)
 {
-	logger_attach(DEBUG, cn_stdout());
-	logger_attach(WARNING, cn_stderr());
-	logger_attach(ERROR, cn_stderr());
 	RUN_TEST_CASE(common, should_destroy_null);
 	RUN_TEST_CASE(list, should_implement_lifo);
 	RUN_TEST_CASE(cirq, should_implement_fifo);
+	RUN_TEST_CASE(rbnode, should_return_left_and_right);
+	RUN_TEST_CASE(rbnode, should_link_as_leaf);
+	RUN_TEST_CASE(rbnode, should_insert_and_balance);
+	RUN_TEST_CASE(strnode, should_sort);
 	RUN_TEST_CASE(strbag, should_allow_many_entries);
 	RUN_TEST_CASE(strbag, should_sort);
 	RUN_TEST_CASE(strbag, should_allow_preorder_traversal);
@@ -563,11 +683,6 @@ static void run_all_tests(void)
 	RUN_TEST_CASE(broker, should_allow_zero_subscribers);
 	RUN_TEST_CASE(broker, should_allow_many_topics);
 	RUN_TEST_CASE(broker, should_support_single_thread_pubsub);
-	if (THREADS_EN) {
-		RUN_TEST_CASE(mutex, should_lock_twice_if_recursive);
-		RUN_TEST_CASE(broker, should_support_multi_thread_pubsub);
-	}
-	logger_cleanup();
 	RUN_TEST_CASE(logger, should_trace_waitq_dataloss);
 	RUN_TEST_CASE(logger, should_trace_rbtree_not_supported);
 	RUN_TEST_CASE(logger, should_trace_debug);
@@ -575,6 +690,8 @@ static void run_all_tests(void)
 	RUN_TEST_CASE(logger, should_do_nothing_if_not_initialized);
 	RUN_TEST_CASE(logger, should_trace_null_params)
 	if (THREADS_EN) {
+		RUN_TEST_CASE(mutex, should_lock_twice_if_recursive);
+		RUN_TEST_CASE(broker, should_support_multi_thread_pubsub);
 		RUN_TEST_CASE(logger, should_trace_not_supported_mutex_policy);
 		RUN_TEST_CASE(logger, should_trace_not_supported_mutex_type);
 	} else {
