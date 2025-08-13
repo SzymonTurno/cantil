@@ -22,10 +22,10 @@ jobs:
       with:
         workflow: ready.yaml
         name: doxygen-output
-        path: docs
+        path: public
         branch: ${BRANCH_NAME}
     - name: Deploy Doxygen Docs
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: docs/html
+        publish_dir: public/html
