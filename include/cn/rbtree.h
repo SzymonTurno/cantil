@@ -38,8 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef CN_RBTREE_H
 #define CN_RBTREE_H
 
-#include "cn/graph.h"
 #include "cn/logger/except.h"
+#include "vx/graph.h"
 #include <stdint.h>
 
 /**
@@ -60,25 +60,25 @@ enum CnRbChild {
 };
 
 /* clang-format off */
-CN_GRAPH(struct CnRbnode, CN_RB_N_CHILDREN, union {intptr_t parcol; int32_t align;});
+VX_GRAPH(struct CnRbnode, CN_RB_N_CHILDREN, union {intptr_t parcol; int32_t align;});
 /* clang-format on */
 
 static inline struct CnRbnode* cn_rb_left(struct CnRbnode* node)
 {
-	struct CnVertex** adjl = NULL;
+	struct Vertegs** adjyl = NULL;
 
-	CN_ENSURE_MEMORY(node, CN_ERROR);
-	adjl = cn_vx2adjl(cn_graph_cast(node));
-	return cn_graph_recast(adjl[CN_RB_LEFT], node);
+	CN_ENSURE_MEM(node, CN_ERROR);
+	adjyl = vx_2adjyl(vx_graph_2vx(node));
+	return vx_graph_4vx(adjyl[CN_RB_LEFT], node);
 }
 
 static inline struct CnRbnode* cn_rb_right(struct CnRbnode* node)
 {
-	struct CnVertex** adjl = NULL;
+	struct Vertegs** adjyl = NULL;
 
-	CN_ENSURE_MEMORY(node, CN_ERROR);
-	adjl = cn_vx2adjl(cn_graph_cast(node));
-	return cn_graph_recast(adjl[CN_RB_RIGHT], node);
+	CN_ENSURE_MEM(node, CN_ERROR);
+	adjyl = vx_2adjyl(vx_graph_2vx(node));
+	return vx_graph_4vx(adjyl[CN_RB_RIGHT], node);
 }
 
 /**

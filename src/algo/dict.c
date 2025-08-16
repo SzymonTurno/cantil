@@ -35,62 +35,61 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cantil/logger/except.h"
 #include "cantil/logger/trace.h"
 #include "cantil/rbtree.h"
-#include "cantil/vertex.h"
 #include <string.h>
 
-static struct CnRbnode* adjl2rbnode(struct CnVertex** adjl)
+static struct CnRbnode* rbnode_4adjyl(struct Vertegs** adjyl)
 {
 	struct CnRbnode* ptr = NULL;
 
-	ENSURE(adjl, ERROR, sanity_fail);
-	ptr = graph_recast(adjl2vx(adjl), ptr);
+	ENSURE(adjyl, ERROR, sanity_fail);
+	ptr = graph_4vx(vx_4adjyl(adjyl), ptr);
 	return ptr;
 }
 
-static struct CnStrnode* rbnode2strnode(struct CnRbnode* ptr)
+static struct CnStrnode* rbnode_2strnode(struct CnRbnode* ptr)
 {
 	return container_of(ptr, struct CnStrnode, node);
 }
 
-static struct CnStrnode* adjl2strnode(struct CnVertex** adjl)
+static struct CnStrnode* strnode_4adjyl(struct Vertegs** adjyl)
 {
-	ENSURE(adjl, ERROR, sanity_fail);
-	return rbnode2strnode(adjl2rbnode(adjl));
+	ENSURE(adjyl, ERROR, sanity_fail);
+	return rbnode_2strnode(rbnode_4adjyl(adjyl));
 }
 
 struct CnStrnode* cn_strnode_ins(struct CnStrnode* root, struct CnStrnode* node)
 {
-	struct CnVertex* adjl[] = {root ? graph_cast(&root->node) : NULL};
-	struct CnVertex** p = adjl;
+	struct Vertegs* adjyl[] = {root ? graph_2vx(&root->node) : NULL};
+	struct Vertegs** p = adjyl;
 	size_t child = 0;
 
-	ENSURE_MEMORY(node, ERROR);
-	ENSURE_MEMORY(node->str, ERROR);
+	ENSURE_MEM(node, ERROR);
+	ENSURE_MEM(node->str, ERROR);
 	while (p[child]) {
-		p = vx2adjl(p[child]);
-		if (strcmp(node->str, adjl2strnode(p)->str) < 0)
+		p = vx_2adjyl(p[child]);
+		if (strcmp(node->str, strnode_4adjyl(p)->str) < 0)
 			child = RB_LEFT;
 		else
 			child = RB_RIGHT;
 	}
-	p[child] = graph_cast(
-		rb_link(&node->node, (p == adjl) ? NULL : adjl2rbnode(p)));
-	return rbnode2strnode(
-		rb_insrebal(graph_recast(adjl[0], &node->node), &node->node));
+	p[child] = graph_2vx(
+		rb_link(&node->node, (p == adjyl) ? NULL : rbnode_4adjyl(p)));
+	return rbnode_2strnode(
+		rb_insrebal(graph_4vx(adjyl[0], &node->node), &node->node));
 }
 
 struct CnStrnode* cn_strnode_find(struct CnStrnode* root, const char* str)
 {
 	int tmp = 0;
 
-	ENSURE_MEMORY(str, ERROR);
+	ENSURE_MEM(str, ERROR);
 	while (root) {
 		ENSURE(root->str, ERROR, null_param);
 		tmp = strcmp(str, root->str);
 		if (tmp < 0)
-			root = rbnode2strnode(rb_left(&root->node));
+			root = rbnode_2strnode(rb_left(&root->node));
 		else if (tmp > 0)
-			root = rbnode2strnode(rb_right(&root->node));
+			root = rbnode_2strnode(rb_right(&root->node));
 		else
 			break;
 	}

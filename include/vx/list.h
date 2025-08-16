@@ -30,12 +30,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /**
- * @file cn/cirq.h
+ * @file vx/list.h
  *
- * @brief Doubly linked circular list.
+ * @brief Singly linked list.
  *
  * This header file provides data types, functions and macros that define and
- * operate on doubly linked circular lists.
+ * operate on singly linked lists.
  *
  *
  * Features
@@ -44,91 +44,86 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * - Intrusive.
  *
  *
- * Glossary
- * --------
- *
- * | Term | Description                 |
- * | ---- | --------------------------- |
- * | cirq | doubly linked circular list |
- *
- *
  * Usage
  * -----
  *
  * @code
  * typedef SomeData MyData;
  *
- * CN_CIRQ(struct MyCirq, MyData);
+ * VX_LIST(struct MyList, MyData);
  *
- * void push(struct MyCirq** headp, MyData data)
+ * void push(struct MyList** listp, MyData data)
  * {
- *     struct MyCirq* entry = malloc(sizeof(*entry));
+ *     struct MyList* entry = malloc(sizeof(*entry));
  *
- *     *cn_graph_data(entry) = data;
- *     *headp = cn_cirq_ins(*headp, entry);
+ *     *vx_graph_data(entry) = data;
+ *     *listp = vx_list_ins(*listp, entry);
  * }
  * @endcode
  */
 
-#ifndef CN_CIRQ_H
-#define CN_CIRQ_H
+#ifndef VX_LIST_H
+#define VX_LIST_H
 
-#include "cn/graph.h"
+#include "vx/graph.h"
 
 /* @cond */
-#define CN__CIRQ_INS(cirq, entry, pos, ...)                                    \
-	(cn_graph_recast(                                                      \
-		cn_vxcirq_ins(                                                 \
-			cn_graph_cast(cirq), cn_graph_cast(entry), (pos)),     \
+#define VX__LIST_INS(list, entry, pos, ...)                                    \
+	(vx_graph_4vx(                                                         \
+		vx_inslist(vx_graph_2vx(list), vx_graph_2vx(entry), (pos)),    \
 		(entry)))
 
-#define CN__CIRQ_REM(cirqp, pos, ...)                                          \
-	(cn_graph_recast(cn_vxcirq_rem(cn_adjl_cast(cirqp), (pos)), *(cirqp)))
+#define VX__LIST_REM(listp, pos, ...)                                          \
+	(vx_graph_4vx(vx_remlist(vx_graph_2adjyl(listp), (pos)), *(listp)))
 /* @endcond */
 
 /**
- * @def CN_CIRQ(name, type)
+ * @def VX_LIST(name, type)
  *
- * @brief Define the *cirq*.
+ * @brief Define the list.
  *
- * @param[in] name The name of the type used for the *cirq*.
+ * @param[in] name The name of the type used for the list.
  * @param[in] type The type of the data held by @a name.
  *
  * This macro will define a compound type (must be struct or union) @a name,
- * a type for a *cirq* entry that holds the data of the type @a type.
+ * a type for a list entry that holds the data of the type @a type.
  */
-#define CN_CIRQ(name, type) CN_GRAPH(name, 2, type)
+#define VX_LIST(name, type) VX_GRAPH(name, 1, type)
 
 /**
- * @def cn_cirq_ins(cirq, ...)
+ * @def vx_list_foreach(type, i, listp)
  *
- * @brief Insert, at the given position, an entry into the *cirq*.
+ * @brief Traverse the list.
  *
- * A call cn_cirq_ins(cirq, entry, pos) will insert the @a entry into the @a
- * cirq at the @a pos. To insert at the head use 0 for the @a pos and to insert
+ * Traverse the list of type @a type referenced by @a listp in the forward
+ * direcion, assigning every entry in turn to @a i.
+ */
+#define vx_list_foreach(type, i, listp) vx_graph_foredge(type, i, listp, 0)
+
+/**
+ * @def vx_list_ins(list, ...)
+ *
+ * @brief Insert, at the given position, an entry into the list.
+ *
+ * A call vx_list_ins(list, entry, pos) will insert the @a entry into the @a
+ * list at the @a pos. To insert at the head use 0 for the @a pos and to insert
  * at the tail use -1 for the @a pos. The argument @a pos is optional and by
- * default it equals -1.
- *
- * @return The new head.
- *
- * @note Compile with the GNU extension to enable a type check for the @a cirq.
+ * default it equals 0.
  */
-#define cn_cirq_ins(cirq, ...) CN__CIRQ_INS((cirq), __VA_ARGS__, -1, )
+#define vx_list_ins(list, ...) VX__LIST_INS((list), __VA_ARGS__, 0, )
 
 /**
- * @def cn_cirq_rem(...)
+ * @def vx_list_rem(...)
  *
- * @brief Remove, at the given position, an entry from the *cirq*.
+ * @brief Remove, at the given position, an entry from the list.
  *
- * A call cn_cirq_rem(cirqp, pos) will remove an entry from the @a cirqp at the
+ * A call vx_list_rem(listp, pos) will remove an entry from the @a listp at the
  * @a pos and will return the removed entry. To remove from the head use 0 for
  * the @a pos and to remove from the tail use -1 for the @a pos. The argument
  * @a pos is optional and by default it equals 0.
  *
  * @return The removed entry.
- *
- * @note Compile with the GNU extension to enable a type check for the @a cirqp.
  */
-#define cn_cirq_rem(...) CN__CIRQ_REM(__VA_ARGS__, 0, )
+#define vx_list_rem(...) VX__LIST_REM(__VA_ARGS__, 0, )
 
-#endif /* CN_CIRQ_H */
+#endif /* VX_LIST_H */

@@ -32,30 +32,31 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /**
  * @file cantil/graph.h
  *
- * @see cn/graph.h
+ * @see vx/graph.h
  */
 
 #ifndef CANTIL_GRAPH_H
 #define CANTIL_GRAPH_H
 
-#include "cn/graph.h"
+#include "cn/os/sys.h"
+#include "vx/graph.h"
 
-/** @see CN_GRAPH() */
-#define GRAPH CN_GRAPH
+/** @see VX_GRAPH() */
+#define GRAPH VX_GRAPH
 
-/** @see cn_adjl_cast() */
-#define adjl_cast cn_adjl_cast
+/** @see vx_graph_2vx() */
+#define graph_2vx vx_graph_2vx
 
-/** @see cn_graph_cast() */
-#define graph_cast cn_graph_cast
+/** @see vx_graph_4vx() */
+#define graph_4vx vx_graph_4vx
 
-/** @see cn_graph_recast() */
-#define graph_recast cn_graph_recast
+/** @see vx_graph_2adjyl() */
+#define graph_2adjyl vx_graph_2adjyl
 
-/** @see cn_graph_data() */
-#define graph_data cn_graph_data
+/** @see vx_graph_data() */
+#define graph_data vx_graph_data
 
-/** @see cn_graph_foredge() */
-#define graph_foredge cn_graph_foredge
+/** @see vx_graph_foredge() */
+#define graph_foredge vx_graph_foredge
 
 #endif /* CANTIL_GRAPH_H */

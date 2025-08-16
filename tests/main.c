@@ -8,7 +8,6 @@
 #include "cantil/pool.h"
 #include "cantil/rbtree.h"
 #include "cantil/str.h"
-#include "cantil/vertex.h"
 #include "cantil/waitq.h"
 #include "cn/os/mem.h"
 #include "pubsub.h"
@@ -124,14 +123,14 @@ TEST(cirq, should_implement_fifo)
 
 TEST(rbnode, should_return_left_and_right)
 {
-	struct CnVertex left[1] = {0};
-	struct CnVertex right[1] = {0};
-	struct CnVertex* adjl[] = {left, right};
+	struct Vertegs left[1] = {0};
+	struct Vertegs right[1] = {0};
+	struct Vertegs* adjyl[] = {left, right};
 
 	TEST_ASSERT_EQUAL_PTR(
-		left, (struct CnVertex*)rb_left((struct CnRbnode*)adjl));
+		left, (struct Vertegs*)rb_left((struct CnRbnode*)adjyl));
 	TEST_ASSERT_EQUAL_PTR(
-		right, (struct CnVertex*)rb_right((struct CnRbnode*)adjl));
+		right, (struct Vertegs*)rb_right((struct CnRbnode*)adjyl));
 }
 
 TEST(rbnode, should_link_as_leaf)
@@ -152,14 +151,14 @@ TEST(rbnode, should_insert_and_balance)
 	struct CnRbnode c = {0};
 	struct CnRbnode a = {0};
 	struct CnRbnode b = {0};
-	struct CnVertex** adjl = vx2adjl((struct CnVertex*)&c);
+	struct Vertegs** adjyl = vx_2adjyl((struct Vertegs*)&c);
 
 	/*
 	 *    c
 	 *   / \
 	 *  a (nil)
 	 */
-	adjl[0] = graph_cast(rb_link(&a, &c));
+	adjyl[0] = graph_2vx(rb_link(&a, &c));
 
 	/*
 	 *    c
@@ -175,8 +174,8 @@ TEST(rbnode, should_insert_and_balance)
 	 *     / \
 	 *  (nil) b
 	 */
-	adjl = vx2adjl((struct CnVertex*)&a);
-	adjl[1] = graph_cast(rb_link(&b, &a));
+	adjyl = vx_2adjyl((struct Vertegs*)&a);
+	adjyl[1] = graph_2vx(rb_link(&b, &a));
 
 	/*
 	 *        b
@@ -184,9 +183,9 @@ TEST(rbnode, should_insert_and_balance)
 	 *      a   c
 	 */
 	TEST_ASSERT_EQUAL_PTR(&b, rb_insrebal(&c, &b));
-	adjl = vx2adjl((struct CnVertex*)&b);
-	TEST_ASSERT_EQUAL_PTR(&a, adjl[0]);
-	TEST_ASSERT_EQUAL_PTR(&c, adjl[1]);
+	adjyl = vx_2adjyl((struct Vertegs*)&b);
+	TEST_ASSERT_EQUAL_PTR(&a, adjyl[0]);
+	TEST_ASSERT_EQUAL_PTR(&c, adjyl[1]);
 }
 
 TEST(strnode, should_sort)
@@ -366,19 +365,17 @@ TEST(sem, should_not_block_if_posted)
 
 TEST(waitq, should_not_block_after_insertion)
 {
-	struct CnVertex* adjl[] = {NULL, NULL};
+	struct Vertegs* adjyl[] = {NULL, NULL};
 	CnWaitq* waitq = waitq_create();
 
-	waitq_ins(waitq, (struct CnVertex*)adjl);
-	TEST_ASSERT_EQUAL_PTR(adjl, waitq_rem(waitq));
+	waitq_ins(waitq, (struct Vertegs*)adjyl);
+	TEST_ASSERT_EQUAL_PTR(adjyl, waitq_rem(waitq));
 	waitq_destroy(waitq);
 }
 
 TEST(binode, should_insert_at_any_position)
 {
-	struct Binode {
-		struct CnVertex* cantil_adj_list[2];
-	};
+	GRAPH(struct Binode, 2, void*);
 
 	const size_t next = 0;
 	const size_t prev = 1;
@@ -387,48 +384,48 @@ TEST(binode, should_insert_at_any_position)
 	/* -n0- */
 	TEST_ASSERT_EQUAL_PTR(
 		&n[0], cirq_ins((struct Binode*)NULL, &n[0], 255));
-	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[prev], &n[0]);
-	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[next], &n[0]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[0]))[prev], &n[0]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[0]))[next], &n[0]);
 
 	/* -n1--n0- */
 	TEST_ASSERT_EQUAL_PTR(&n[1], cirq_ins(&n[0], &n[1], 0));
-	TEST_ASSERT_EQUAL_PTR(n[1].cantil_adj_list[prev], &n[0]);
-	TEST_ASSERT_EQUAL_PTR(n[1].cantil_adj_list[next], &n[0]);
-	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[prev], &n[1]);
-	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[next], &n[1]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[1]))[prev], &n[0]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[1]))[next], &n[0]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[0]))[prev], &n[1]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[0]))[next], &n[1]);
 
 	/* -n1--n0--n2- */
 	TEST_ASSERT_EQUAL_PTR(&n[1], cirq_ins(&n[1], &n[2], -1));
-	TEST_ASSERT_EQUAL_PTR(n[1].cantil_adj_list[prev], &n[2]);
-	TEST_ASSERT_EQUAL_PTR(n[1].cantil_adj_list[next], &n[0]);
-	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[prev], &n[1]);
-	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[next], &n[2]);
-	TEST_ASSERT_EQUAL_PTR(n[2].cantil_adj_list[prev], &n[0]);
-	TEST_ASSERT_EQUAL_PTR(n[2].cantil_adj_list[next], &n[1]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[1]))[prev], &n[2]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[1]))[next], &n[0]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[0]))[prev], &n[1]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[0]))[next], &n[2]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[2]))[prev], &n[0]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[2]))[next], &n[1]);
 
 	/* -n1--n3--n0--n- */
 	TEST_ASSERT_EQUAL_PTR(&n[1], cirq_ins(&n[1], &n[3], 1));
-	TEST_ASSERT_EQUAL_PTR(n[1].cantil_adj_list[prev], &n[2]);
-	TEST_ASSERT_EQUAL_PTR(n[1].cantil_adj_list[next], &n[3]);
-	TEST_ASSERT_EQUAL_PTR(n[3].cantil_adj_list[prev], &n[1]);
-	TEST_ASSERT_EQUAL_PTR(n[3].cantil_adj_list[next], &n[0]);
-	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[prev], &n[3]);
-	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[next], &n[2]);
-	TEST_ASSERT_EQUAL_PTR(n[2].cantil_adj_list[prev], &n[0]);
-	TEST_ASSERT_EQUAL_PTR(n[2].cantil_adj_list[next], &n[1]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[1]))[prev], &n[2]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[1]))[next], &n[3]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[3]))[prev], &n[1]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[3]))[next], &n[0]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[0]))[prev], &n[3]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[0]))[next], &n[2]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[2]))[prev], &n[0]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[2]))[next], &n[1]);
 
 	/* -n1--n3--n0--n--n2- */
 	TEST_ASSERT_EQUAL_PTR(&n[1], cirq_ins(&n[1], &n[4], -2));
-	TEST_ASSERT_EQUAL_PTR(n[1].cantil_adj_list[prev], &n[2]);
-	TEST_ASSERT_EQUAL_PTR(n[1].cantil_adj_list[next], &n[3]);
-	TEST_ASSERT_EQUAL_PTR(n[3].cantil_adj_list[prev], &n[1]);
-	TEST_ASSERT_EQUAL_PTR(n[3].cantil_adj_list[next], &n[0]);
-	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[prev], &n[3]);
-	TEST_ASSERT_EQUAL_PTR(n[0].cantil_adj_list[next], &n[4]);
-	TEST_ASSERT_EQUAL_PTR(n[4].cantil_adj_list[prev], &n[0]);
-	TEST_ASSERT_EQUAL_PTR(n[4].cantil_adj_list[next], &n[2]);
-	TEST_ASSERT_EQUAL_PTR(n[2].cantil_adj_list[prev], &n[4]);
-	TEST_ASSERT_EQUAL_PTR(n[2].cantil_adj_list[next], &n[1]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[1]))[prev], &n[2]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[1]))[next], &n[3]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[3]))[prev], &n[1]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[3]))[next], &n[0]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[0]))[prev], &n[3]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[0]))[next], &n[4]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[4]))[prev], &n[0]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[4]))[next], &n[2]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[2]))[prev], &n[4]);
+	TEST_ASSERT_EQUAL_PTR(vx_2adjyl(graph_2vx(&n[2]))[next], &n[1]);
 }
 
 TEST(pool, should_return_freed_pointer)
@@ -544,10 +541,10 @@ TEST(broker, should_support_multi_thread_pubsub)
 
 TEST(logger, should_trace_waitq_dataloss)
 {
-	struct CnVertex* adjl[] = {NULL, NULL};
+	struct Vertegs* adjyl[] = {NULL, NULL};
 	CnWaitq* q = waitq_create();
 
-	waitq_ins(q, (struct CnVertex*)adjl);
+	waitq_ins(q, (struct Vertegs*)adjyl);
 	waitq_destroy(q);
 	TEST_ASSERT_EQUAL_STRING(
 		"[warning][cantil] Data loss suspected.\n", gettrace(0));
@@ -559,11 +556,11 @@ TEST(logger, should_trace_rbtree_not_supported)
 
 	rb_next(&node, BST_POSTORDER);
 	TEST_ASSERT_EQUAL_STRING(
-		"src/algo/rbtree.c:203: Not supported.\n",
+		"src/algo/rbtree.c:199: Not supported.\n",
 		strstr(gettrace(0), "src/algo/rbtree.c:"));
 	rb_first(&node, BST_PREORDER);
 	TEST_ASSERT_EQUAL_STRING(
-		"src/algo/rbtree.c:164: Not supported.\n",
+		"src/algo/rbtree.c:160: Not supported.\n",
 		strstr(gettrace(1), "src/algo/rbtree.c:"));
 }
 
@@ -592,7 +589,7 @@ TEST(logger, should_trace_null_params)
 
 	subscribe(tmp, NULL);
 	TEST_ASSERT_EQUAL_STRING(
-		"src/broker/broker.c:307: Null param.\n",
+		"src/broker/broker.c:309: Null param.\n",
 		strstr(gettrace(0), "src/broker/broker.c:"));
 	free(tmp);
 }

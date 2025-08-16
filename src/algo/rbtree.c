@@ -34,7 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cantil/graph.h"
 #include "cantil/logger/except.h"
 #include "cantil/logger/trace.h"
-#include "cantil/vertex.h"
 #include <stddef.h>
 
 #define COLOR_MASK ((intptr_t)BIT(0))
@@ -67,16 +66,12 @@ static struct CnRbnode* get_parent(struct CnRbnode* node)
 
 static void set_left(struct CnRbnode* node, struct CnRbnode* child)
 {
-	struct CnVertex** adjl = vx2adjl(graph_cast(node));
-
-	adjl[RB_LEFT] = graph_cast(child);
+	vx_2adjyl(graph_2vx(node))[RB_LEFT] = graph_2vx(child);
 }
 
 static void set_right(struct CnRbnode* node, struct CnRbnode* child)
 {
-	struct CnVertex** adjl = vx2adjl(graph_cast(node));
-
-	adjl[RB_RIGHT] = graph_cast(child);
+	vx_2adjyl(graph_2vx(node))[RB_RIGHT] = graph_2vx(child);
 }
 
 static struct CnRbnode* rot_left(struct CnRbnode* node, struct CnRbnode* root)
@@ -125,14 +120,14 @@ static struct CnRbnode* rot_right(struct CnRbnode* node, struct CnRbnode* root)
 
 static struct CnRbnode* get_leftcorner(struct CnRbnode* node)
 {
-	return graph_recast(vx_get(graph_cast(node), RB_LEFT, -1), node);
+	return graph_4vx(vx_upto(graph_2vx(node), RB_LEFT, -1), node);
 }
 
 static struct CnRbnode* get_inorderfirst(struct CnRbnode* node)
 {
 	struct CnRbnode* p = NULL;
 
-	ENSURE_MEMORY(node, ERROR);
+	ENSURE_MEM(node, ERROR);
 	for (;;) {
 		if (rb_left(node))
 			node = rb_left(node);
@@ -183,7 +178,7 @@ static struct CnRbnode* get_preordersucc(struct CnRbnode* node)
 
 static struct CnRbnode* get_postorderfirst(struct CnRbnode* node)
 {
-	ENSURE_MEMORY(node, ERROR);
+	ENSURE_MEM(node, ERROR);
 	while (get_parent(node))
 		node = get_parent(node);
 
@@ -207,7 +202,7 @@ static struct CnRbnode* get_postordersucc(struct CnRbnode* node)
 
 struct CnRbnode* cn_rb_link(struct CnRbnode* node, struct CnRbnode* parent)
 {
-	ENSURE_MEMORY(node, ERROR);
+	ENSURE_MEM(node, ERROR);
 	paint_red(node);
 	set_parent(node, parent);
 	set_left(node, NULL);
@@ -217,7 +212,7 @@ struct CnRbnode* cn_rb_link(struct CnRbnode* node, struct CnRbnode* parent)
 
 struct CnRbnode* cn_rb_insrebal(struct CnRbnode* root, struct CnRbnode* node)
 {
-	ENSURE_MEMORY(node, ERROR);
+	ENSURE_MEM(node, ERROR);
 	for (struct CnRbnode *p = NULL, *g = NULL, *u = NULL;;) {
 		p = get_parent(node);
 		if (!painted_red(p)) {
@@ -302,13 +297,13 @@ struct CnRbnode* cn_rb_insrebal(struct CnRbnode* root, struct CnRbnode* node)
 
 struct CnRbnode* cn_rb_parent(struct CnRbnode* node)
 {
-	ENSURE_MEMORY(node, ERROR);
+	ENSURE_MEM(node, ERROR);
 	return get_parent(node);
 }
 
 struct CnRbnode* cn_rb_first(struct CnRbnode* node, enum CnBstOrder order)
 {
-	ENSURE_MEMORY(node, ERROR);
+	ENSURE_MEM(node, ERROR);
 	switch (order) {
 	case CN_BST_PREORDER:
 		return get_preorderfirst(node);
@@ -322,7 +317,7 @@ struct CnRbnode* cn_rb_first(struct CnRbnode* node, enum CnBstOrder order)
 
 struct CnRbnode* cn_rb_next(struct CnRbnode* node, enum CnBstOrder order)
 {
-	ENSURE_MEMORY(node, ERROR);
+	ENSURE_MEM(node, ERROR);
 	switch (order) {
 	case CN_BST_PREORDER:
 		return get_preordersucc(node);

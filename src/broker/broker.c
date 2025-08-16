@@ -36,7 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cantil/os/mem.h"
 #include "cantil/rbtree.h"
 #include "cantil/str.h"
-#include "cantil/vertex.h"
 #include "message.h"
 
 #define MSG_SIZE sizeof(struct Message)
@@ -78,9 +77,9 @@ static void dict_destroy(CnChannel* dict)
 			break;
 
 		if (i == rb_left(p))
-			vx2adjl(graph_cast(p))[RB_LEFT] = NULL;
+			vx_2adjyl(graph_2vx(p))[RB_LEFT] = NULL;
 		else
-			vx2adjl(graph_cast(p))[RB_RIGHT] = NULL;
+			vx_2adjyl(graph_2vx(p))[RB_RIGHT] = NULL;
 	}
 }
 
@@ -111,7 +110,7 @@ static void ins_msg(CnSubscriber* sber, struct Message* msg)
 		/* LCOV_EXCL_STOP */
 	}
 	*graph_data(entry) = msg;
-	waitq_ins(sber->q, graph_cast(entry));
+	waitq_ins(sber->q, graph_2vx(entry));
 }
 
 static void notify(struct ChannelData* data, struct Message* msg)
@@ -141,14 +140,14 @@ static void unsubscribe(CnChannel* ch, CnSubscriber* sber)
 	mutex_unlock(data->mutex);
 }
 
-static CnLoad* load_init(CnSubscriber* sber, struct CnVertex* node)
+static CnLoad* load_init(CnSubscriber* sber, struct Vertegs* node)
 {
 	struct Qentry* q = NULL;
 
 	subscriber_release(sber);
 	if (!node)
 		return NULL;
-	q = graph_recast(node, q);
+	q = graph_4vx(node, q);
 	sber->msg = *graph_data(q);
 	pool_free(sber->broker->sbers.pool, q);
 	return msg_getload(sber->msg);
@@ -158,10 +157,10 @@ CnBroker* cn_broker_create(const struct CnLoadVt* vp)
 {
 	struct CnBroker* self = NULL;
 
-	ENSURE_MEMORY(vp, ERROR);
-	ENSURE_MEMORY(vp->size, ERROR);
-	ENSURE_MEMORY(vp->ctor, ERROR);
-	ENSURE_MEMORY(vp->dtor, ERROR);
+	ENSURE_MEM(vp, ERROR);
+	ENSURE_MEM(vp->size, ERROR);
+	ENSURE_MEM(vp->ctor, ERROR);
+	ENSURE_MEM(vp->dtor, ERROR);
 	self = NEW(struct CnBroker);
 	self->vp = vp;
 	self->mutex = mutex_create(MUTEX_POLICY_PRIO_INHERIT);
@@ -197,7 +196,7 @@ CnChannel* cn_broker_search(CnBroker* broker, const char* topic)
 {
 	struct CnChannel* ch = NULL;
 
-	ENSURE_MEMORY(broker, ERROR);
+	ENSURE_MEM(broker, ERROR);
 	mutex_lock(broker->mutex);
 	ch = dict_find(broker->channels.dict, topic);
 	if (!ch) {
@@ -212,7 +211,7 @@ CnSubscriber* cn_subscriber_create(CnBroker* broker)
 {
 	CnSubscriber* self = NULL;
 
-	ENSURE_MEMORY(broker, ERROR);
+	ENSURE_MEM(broker, ERROR);
 	self = NEW(CnSubscriber);
 	self->broker = broker;
 	self->q = waitq_create();
@@ -253,7 +252,7 @@ CnLoad* cn_subscriber_await(CnSubscriber* sber, CnChannel** ch)
 {
 	CnLoad* ret = NULL;
 
-	ENSURE_MEMORY(sber, ERROR);
+	ENSURE_MEM(sber, ERROR);
 	ret = load_init(sber, waitq_rem(sber->q));
 	if (ch) {
 		ENSURE(sber->msg, ERROR, null_param);
@@ -266,7 +265,7 @@ CnLoad* cn_subscriber_poll(CnSubscriber* sber, CnChannel** ch)
 {
 	CnLoad* ret = NULL;
 
-	ENSURE_MEMORY(sber, ERROR);
+	ENSURE_MEM(sber, ERROR);
 	ret = load_init(sber, waitq_tryrem(sber->q));
 	if (ch && sber->msg)
 		*ch = sber->msg->channel;
@@ -276,6 +275,9 @@ CnLoad* cn_subscriber_poll(CnSubscriber* sber, CnChannel** ch)
 void cn_subscriber_release(CnSubscriber* sber)
 {
 	ENSURE(sber, ERROR, null_param);
+	if (!sber)
+		return;
+
 	if (sber->msg)
 		msg_release(sber->msg);
 	sber->msg = NULL;

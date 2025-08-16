@@ -36,10 +36,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cantil/os/mem.h"
 #include "cantil/os/mutex.h"
 #include "cantil/os/sem.h"
-#include "cantil/vertex.h"
 
 struct CnWaitq {
-	struct CnVertex* v;
+	struct Vertegs* v;
 	CnMutex* mut;
 	CnSem* sem;
 };
@@ -68,35 +67,35 @@ void cn_waitq_destroy(CnWaitq* waitq)
 	cn_free(waitq);
 }
 
-void cn_waitq_ins(CnWaitq* waitq, struct CnVertex* entry)
+void cn_waitq_ins(CnWaitq* waitq, struct Vertegs* entry)
 {
 	ENSURE(waitq, ERROR, null_param);
 	mutex_lock(waitq->mut);
-	waitq->v = vxcirq_ins(waitq->v, entry, -1);
+	waitq->v = vx_inscirq(waitq->v, entry, -1);
 	sem_post(waitq->sem);
 	mutex_unlock(waitq->mut);
 }
 
-struct CnVertex* cn_waitq_rem(CnWaitq* waitq)
+struct Vertegs* cn_waitq_rem(CnWaitq* waitq)
 {
-	struct CnVertex* entry = NULL;
+	struct Vertegs* entry = NULL;
 
 	ENSURE(waitq, ERROR, null_param);
 	sem_wait(waitq->sem);
 	mutex_lock(waitq->mut);
-	entry = vxcirq_rem(&waitq->v, 0);
+	entry = vx_remcirq(&waitq->v, 0);
 	mutex_unlock(waitq->mut);
 	return entry;
 }
 
-struct CnVertex* cn_waitq_tryrem(CnWaitq* waitq)
+struct Vertegs* cn_waitq_tryrem(CnWaitq* waitq)
 {
-	struct CnVertex* entry = NULL;
+	struct Vertegs* entry = NULL;
 
 	ENSURE(waitq, ERROR, null_param);
 	if (sem_trywait(waitq->sem)) {
 		mutex_lock(waitq->mut);
-		entry = vxcirq_rem(&waitq->v, 0);
+		entry = vx_remcirq(&waitq->v, 0);
 		mutex_unlock(waitq->mut);
 	}
 	return entry;

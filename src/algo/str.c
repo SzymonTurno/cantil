@@ -39,7 +39,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cantil/logger/trace.h"
 #include "cantil/os/mem.h"
 #include "cantil/rbtree.h"
-#include "cantil/vertex.h"
 #include <string.h>
 
 static struct CnStrbag* bag_create(const char* str)
@@ -71,7 +70,7 @@ struct CnStrlist* cn_strlist_ins(struct CnStrlist* list, char* str)
 {
 	struct CnStrlist* self = NEW(struct CnStrlist);
 
-	ENSURE_MEMORY(self, ERROR);
+	ENSURE_MEM(self, ERROR);
 	*graph_data(self) = str;
 	return list_ins(list, self);
 }
@@ -86,7 +85,7 @@ char* cn_strlist_rem(struct CnStrlist** listp)
 	struct CnStrlist* tmp = NULL;
 	char* ret = NULL;
 
-	ENSURE_MEMORY(listp, ERROR);
+	ENSURE_MEM(listp, ERROR);
 	tmp = list_rem(listp);
 	ret = *graph_data(tmp);
 	cn_free(tmp);
@@ -97,7 +96,7 @@ struct CnStrq* cn_strq_ins(struct CnStrq* q, char* str)
 {
 	struct CnStrq* self = NEW(struct CnStrq);
 
-	ENSURE_MEMORY(self, ERROR);
+	ENSURE_MEM(self, ERROR);
 	*graph_data(self) = str;
 	return cirq_ins(q, self);
 }
@@ -107,8 +106,8 @@ char* cn_strq_rem(struct CnStrq** qp)
 	struct CnStrq* tmp = NULL;
 	char* ret = NULL;
 
-	ENSURE_MEMORY(qp, ERROR);
-	ENSURE_MEMORY(*qp, ERROR);
+	ENSURE_MEM(qp, ERROR);
+	ENSURE_MEM(*qp, ERROR);
 	tmp = cirq_rem(qp);
 	ret = *graph_data(tmp);
 	cn_free(tmp);
@@ -158,8 +157,8 @@ void cn_strbag_destroy(struct CnStrbag* bag)
 			break;
 
 		if (i == rb_left(p))
-			vx2adjl(graph_cast(p))[RB_LEFT] = NULL;
+			vx_2adjyl(graph_2vx(p))[RB_LEFT] = NULL;
 		else
-			vx2adjl(graph_cast(p))[RB_RIGHT] = NULL;
+			vx_2adjyl(graph_2vx(p))[RB_RIGHT] = NULL;
 	}
 }

@@ -30,45 +30,43 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /**
- * @file cn/graph.h
+ * @file vx/graph.h
  *
  * @brief Graph.
  */
 
-#ifndef CN_GRAPH_H
-#define CN_GRAPH_H
+#ifndef VX_GRAPH_H
+#define VX_GRAPH_H
 
-#include "cn/vertex.h"
-#include <stdint.h>
+#include "vx/vertegs.h"
 
 #ifdef __STRICT_ANSI__
-#define CN_TYPEOF(var) void*
+#define VX_TYPEOF(var) void*
 #else
-#define CN_TYPEOF(var) __typeof__(var)
+#define VX_TYPEOF(var) __typeof__(var)
 #endif
 
-#define CN_GRAPH(name, deg, type)                                              \
+#define VX_GRAPH(name, deg, type)                                              \
 	name                                                                   \
 	{                                                                      \
-		struct CnVertex* cantil_adj_list[deg];                         \
-		type cantil_graph_data;                                        \
+		struct Vertegs* vx_graph_adjyl[deg];                           \
+		type vx_graph_data;                                            \
 	}
 
-#define cn_adjl_cast(graphp)                                                   \
-	(0 ? (*(graphp))->cantil_adj_list : (struct CnVertex**)(graphp))
+#define vx_graph_2vx(graph)                                                    \
+	(0 ? (struct Vertegs*)(graph)->vx_graph_adjyl                          \
+	   : (struct Vertegs*)(graph))
 
-#define cn_graph_cast(graph)                                                   \
-	(0 ? (struct CnVertex*)(graph)->cantil_adj_list                        \
-	   : (struct CnVertex*)(graph))
+#define vx_graph_4vx(v, graph)                                                 \
+	(0 ? (VX_TYPEOF(graph))((graph)->vx_graph_adjyl[0] = (v)->adjyl[0])    \
+	   : ((VX_TYPEOF(graph))(v)))
 
-#define cn_graph_recast(vp, graph)                                             \
-	(0 ? (CN_TYPEOF(graph))(intptr_t)((graph)->cantil_adj_list &&          \
-	                                  (vp)->adjl)                          \
-	   : ((CN_TYPEOF(graph))(vp)))
+#define vx_graph_2adjyl(graphp)                                                \
+	(0 ? (*(graphp))->vx_graph_adjyl : (struct Vertegs**)(graphp))
 
-#define cn_graph_data(graph) (&(graph)->cantil_graph_data)
+#define vx_graph_data(graph) (&(graph)->vx_graph_data)
 
-#define cn_graph_foredge(type, i, graphp, edge)                                \
-	for (type** i = graphp; *i; i = (type**)&(*i)->cantil_adj_list[edge])
+#define vx_graph_foredge(type, i, graphp, edge)                                \
+	for (type** i = graphp; *i; i = (type**)&(*i)->vx_graph_adjyl[edge])
 
-#endif /* CN_GRAPH_H */
+#endif /* VX_GRAPH_H */

@@ -30,128 +30,127 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /**
- * @file cn/vertex.h
+ * @file vx/vertegs.h
  *
  * @brief Vertex.
+ *
+ * This header file provides data types, functions and macros that define and
+ * operate on graph vertices.
  */
 
-#ifndef CN_VERTEX_H
-#define CN_VERTEX_H
+#ifndef VERTEGS_H
+#define VERTEGS_H
 
 #include <stddef.h>
 
-#ifndef OPTIMIZE_VX
+#ifndef VX_EXCEPT
 
-#define OPTIMIZE_VX 0
+#define VX_EXCEPT(reason, file, line)
 
-#endif /* OPTIMIZE_VX */
+#endif /* VX_EXCEPT */
 
-#define CN_VX_MEMCHECK(v)                                                      \
+#define VX_ENSURE_MEM(v)                                                       \
 	do {                                                                   \
-		if (!OPTIMIZE_VX && !v) {                                      \
-			cn_vx_error(__LINE__);                                 \
+		if ((v) == NULL) {                                             \
+			VX_EXCEPT("Null param.", __FILE__, __LINE__);          \
 			return NULL;                                           \
 		}                                                              \
 	} while (0)
 
-struct CnVertex {
-	struct CnVertex* adjl[1];
+struct Vertegs {
+	struct Vertegs* adjyl[1];
 };
 
-void cn_vx_error(int line);
-
-static inline struct CnVertex*
-cn_vx_get(struct CnVertex* v, size_t edge, int pos)
+static inline struct Vertegs** vx_2adjyl(struct Vertegs* v)
 {
-	struct CnVertex* p = NULL;
+	return (struct Vertegs**)v;
+}
 
-	CN_VX_MEMCHECK(v);
-	while (pos-- && (p = v->adjl[edge]))
+static inline struct Vertegs* vx_4adjyl(struct Vertegs** adjyl)
+{
+	return (struct Vertegs*)adjyl;
+}
+
+static inline struct Vertegs* vx_upto(struct Vertegs* v, size_t edge, int pos)
+{
+	struct Vertegs* p = NULL;
+
+	VX_ENSURE_MEM(v);
+	while (pos-- && (p = v->adjyl[edge]))
 		v = p;
 	return v;
 }
 
-static inline struct CnVertex** cn_vx2adjl(struct CnVertex* v)
-{
-	return (struct CnVertex**)v;
-}
-
-static inline struct CnVertex* cn_adjl2vx(struct CnVertex** adjl)
-{
-	return (struct CnVertex*)adjl;
-}
-
-static inline struct CnVertex*
-cn_vxlist_ins(struct CnVertex* list, struct CnVertex* entry, int pos)
+static inline struct Vertegs*
+vx_inslist(struct Vertegs* list, struct Vertegs* entry, int pos)
 {
 	const size_t next = 0;
-	struct CnVertex* adjl[] = {list};
-	struct CnVertex* v = cn_vx_get(cn_adjl2vx(adjl), next, pos);
+	struct Vertegs* adjyl[] = {list};
+	struct Vertegs* v = vx_upto(vx_4adjyl(adjyl), next, pos);
 
-	CN_VX_MEMCHECK(entry);
-	entry->adjl[next] = v->adjl[next];
-	v->adjl[next] = entry;
-	return adjl[next];
+	VX_ENSURE_MEM(entry);
+	entry->adjyl[next] = v->adjyl[next];
+	v->adjyl[next] = entry;
+	return adjyl[next];
 }
 
-static inline struct CnVertex* cn_vxlist_rem(struct CnVertex** list, int pos)
+static inline struct Vertegs* vx_remlist(struct Vertegs** listp, int pos)
 {
 	const size_t next = 0;
-	struct CnVertex* ret = NULL;
-	struct CnVertex* v = cn_vx_get(cn_adjl2vx(list), next, pos);
+	struct Vertegs* ret = NULL;
+	struct Vertegs* v = vx_upto(vx_4adjyl(listp), next, pos);
 
-	ret = v->adjl[next];
-	v->adjl[next] = ret->adjl[next];
+	ret = v->adjyl[next];
+	v->adjyl[next] = ret->adjyl[next];
 	return ret;
 }
 
-static inline struct CnVertex*
-cn_vxcirq_ins(struct CnVertex* cirq, struct CnVertex* entry, int pos)
+static inline struct Vertegs*
+vx_inscirq(struct Vertegs* cirq, struct Vertegs* entry, int pos)
 {
 	const size_t next = 0;
 	const size_t prev = 1;
-	struct CnVertex* v = NULL;
+	struct Vertegs* v = NULL;
 
-	CN_VX_MEMCHECK(entry);
+	VX_ENSURE_MEM(entry);
 	if (!cirq) {
-		entry->adjl[next] = entry;
-		entry->adjl[prev] = entry;
+		entry->adjyl[next] = entry;
+		entry->adjyl[prev] = entry;
 		return entry;
 	}
 
 	if (pos > 0)
-		v = cn_vx_get(cirq, next, pos);
+		v = vx_upto(cirq, next, pos);
 	else if (pos < -1)
-		v = cn_vx_get(cirq, prev, -(pos + 1));
+		v = vx_upto(cirq, prev, -(pos + 1));
 	else
 		v = cirq;
-	entry->adjl[next] = v;
-	entry->adjl[prev] = v->adjl[prev];
-	v->adjl[prev] = entry;
-	entry->adjl[prev]->adjl[next] = entry;
+	entry->adjyl[next] = v;
+	entry->adjyl[prev] = v->adjyl[prev];
+	v->adjyl[prev] = entry;
+	entry->adjyl[prev]->adjyl[next] = entry;
 	return pos ? cirq : entry;
 }
 
-static inline struct CnVertex* cn_vxcirq_rem(struct CnVertex** cirqp, int pos)
+static inline struct Vertegs* vx_remcirq(struct Vertegs** cirqp, int pos)
 {
 	const size_t next = 0;
 	const size_t prev = 1;
-	struct CnVertex* ret = NULL;
+	struct Vertegs* ret = NULL;
 
-	CN_VX_MEMCHECK(cirqp);
-	CN_VX_MEMCHECK(*cirqp);
+	VX_ENSURE_MEM(cirqp);
 	ret = *cirqp;
 	if (pos > 0)
-		ret = cn_vx_get(ret, next, pos);
+		ret = vx_upto(ret, next, pos);
 	else if (pos < 0)
-		ret = cn_vx_get(ret, prev, -pos);
-	ret->adjl[next]->adjl[prev] = ret->adjl[prev];
-	ret->adjl[prev]->adjl[next] = ret->adjl[next];
-	if (ret == ret->adjl[next])
+		ret = vx_upto(ret, prev, -pos);
+	ret->adjyl[next]->adjyl[prev] = ret->adjyl[prev];
+	ret->adjyl[prev]->adjyl[next] = ret->adjyl[next];
+	if (ret == ret->adjyl[next])
 		*cirqp = NULL;
 	else if (ret == *cirqp)
-		*cirqp = ret->adjl[next];
+		*cirqp = ret->adjyl[next];
 	return ret;
 }
 
-#endif /* CN_VERTEX_H */
+#endif /* VERTEGS_H */
