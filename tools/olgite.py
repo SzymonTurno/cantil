@@ -71,6 +71,18 @@ def combine_into(d: dict, combined: dict) -> None:
         elif k not in combined:
             combined[k] = v
 
+class Olrule:
+    def __init__(self, target: str):
+        self.__target = target
+        self.__deps = []
+        self.__steps = []
+
+    def dep(self, dep: str) -> None:
+        self.__deps.append(dep)
+
+    def step(self, step: str) -> None:
+        self.__steps.append(step)
+
 class Olvars:
     def __init__(self, root: str, yamls: list):
         self.__root = os.path.normpath(os.path.dirname(root))
@@ -78,6 +90,7 @@ class Olvars:
         self.__constraints = []
         self.__settings = {}
         self.__variables = {}
+        self.__rules = {}
 
         self.__prepare()
         self.__update(yamls)
@@ -114,6 +127,16 @@ class Olvars:
             print(key + ':=' + values[0])
             for value in values[1:]:
                 print(key + '+=' + value)
+
+        print('')
+        for rule in self.__rules:
+            print(rule.text())
+            print('')
+
+    def rule(self, target) -> Olrule:
+        if target not in self.__rules:
+            self.__rules(target) = Olrule(target)
+        return self.__rules(target)
 
     def slashify(self, *paths) -> str:
         return os.path.join(*paths).replace('\\', '/')
