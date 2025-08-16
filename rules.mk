@@ -1,35 +1,3 @@
-ifeq ($(OS),Windows_NT)
-	MKDIR = mkdir $(subst /,\,$(1))
-else
-	MKDIR = mkdir -p $(1)
-endif
-
-all: $(cantil_BLDDIR)/libcantil.a
-
-$(test_BLDDIR)/reports.d/coverage.d: $(test_BLDDIR)/reports.d/coverage.info
-ifeq ($(OS),Windows_NT)
-	$(call MKDIR, $@)
-else
-	genhtml $(test_BLDDIR)/reports.d/coverage.info --show-details \
-		--output-directory $@
-endif
-
-$(test_BLDDIR)/reports.d/coverage.info: $(test_BLDDIR)/reports.d/valgrind.info
-ifeq ($(OS),Windows_NT)
-	echo No coverage for Windows. > $@
-else
-	lcov --capture --directory ./ --output-file $@
-endif
-
-$(test_BLDDIR)/reports.d/valgrind.info: $(test_BLDDIR)/app | $(test_BLDDIR)/reports.d
-ifeq ($(OS),Windows_NT)
-	./$(test_BLDDIR)/app
-	echo No memchecks for Windows. > $@
-else
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes \
-		--error-exitcode=1 --log-file="$@" ./$(test_BLDDIR)/app
-endif
-
 $(test_BLDDIR)/reports.d:
 	$(call MKDIR, $@)
 
